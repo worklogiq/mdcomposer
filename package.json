@@ -1,0 +1,56 @@
+{
+  "name": "@worklogiq/mdcomposer",
+  "version": "0.1.0",
+  "description": "Portable Markdown composition, navigation, metadata and local reference validation.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Steven Sheaves",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/worklogiq/mdcomposer.git"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "mdcomposer": "./dist/mdcomposer.cli.cjs"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.tool.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node scripts/test.tool.js",
+    "check": "npm run typecheck && npm test",
+    "prepack": "npm run build",
+    "export-skill": "node dist/mdcomposer.cli.cjs export-skill"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "esbuild": "^0.25.0",
+    "github-slugger": "^2.0.0",
+    "mdast-util-from-markdown": "^2.0.2",
+    "micromark": "^4.0.3",
+    "typescript": "^5.9.3",
+    "yaml": "^2.8.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
