@@ -143,19 +143,39 @@ const destinationRanges = (contents: string): { start: number; end: number }[] =
 
 export const rebaseMarkdownLinks = (contents: string, sourceFile: string, destinationFile: string, root?: string, targets?: Record<string, string>): string => {
   const changes: { start: number; end: number; value: string }[] = [];
+  const tree = parseMarkdown(contents);
   const ranges = destinationRanges(contents);
-  for (const link of extractMarkdownLinks(contents)) {
-    if (link.kind === 'reference' || externalLink(link.destination)) continue;
-    const parts = splitLink(link.destination);
-    const range = ranges.filter(candidate => candidate.start >= link.start && candidate.end <= link.end).at(-1);
-    if (!range) continue;
+  const rebaseDestination = (destination: string): string => {
+    const parts = splitLink(destination);
     const originalTarget = parts.pathname.startsWith('/') && root ? path.resolve(root, `.${decodePath(parts.pathname)}`) : parts.pathname ? path.resolve(path.dirname(sourceFile), decodePath(parts.pathname)) : sourceFile;
     const target = targets?.[originalTarget] ?? originalTarget;
     let relative = posix(path.relative(path.dirname(destinationFile), target));
     if (!relative.startsWith('.')) relative = `./${relative}`;
-    const value = encodeURI(relative).replace(/[()]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`) + parts.query + (parts.fragment ? `#${parts.fragment}` : '');
-    changes.push({ start: range.start, end: range.end, value });
+    return encodeURI(relative).replace(/[()]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`) + parts.query + (parts.fragment ? `#${parts.fragment}` : '');
+  };
+  for (const link of extractMarkdownLinks(contents, tree)) {
+    if (link.kind === 'reference' || externalLink(link.destination)) continue;
+    const range = ranges.filter(candidate => candidate.start >= link.start && candidate.end <= link.end).at(-1);
+    if (!range) continue;
+    changes.push({ start: range.start, end: range.end, value: rebaseDestination(link.destination) });
   }
+  visit(tree, node => {
+    if (node.type !== 'html' || !node.position) return;
+    const directive = /^<!--\s*@(include|embed)\(([^)]+)\)\s*-->$/.exec(node.value?.trim() ?? '');
+    if (!directive) return;
+    const nodeStart = node.position.start.offset!;
+    const nodeEnd = node.position.end.offset!;
+    const lineStart = contents.lastIndexOf('\n', nodeStart - 1) + 1;
+    const lineEnd = contents.indexOf('\n', nodeEnd);
+    if (contents.slice(lineStart, nodeStart).trim() || contents.slice(nodeEnd, lineEnd < 0 ? contents.length : lineEnd).trim()) return;
+    const destination = directive[2].trim();
+    if (!destination || externalLink(destination)) return;
+    const raw = contents.slice(nodeStart, nodeEnd);
+    const argumentStart = raw.indexOf(`@${directive[1]}(`) + directive[1].length + 2;
+    const leadingSpace = directive[2].length - directive[2].trimStart().length;
+    const start = nodeStart + argumentStart + leadingSpace;
+    changes.push({ start, end: start + destination.length, value: rebaseDestination(destination) });
+  });
   let output = contents;
   for (const change of changes.sort((a, b) => b.start - a.start)) output = output.slice(0, change.start) + change.value + output.slice(change.end);
   return output;

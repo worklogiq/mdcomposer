@@ -40,6 +40,13 @@ test('rebasing edits the parsed destination rather than resource-like title text
   assert.equal(api.rebaseMarkdownLinks(escaped,source,target),'[x](../source%28copy%29.md "keep title")');
   assert.equal(api.rebaseMarkdownLinks('[`label ](literal)`](source.md)',source,target),'[`label ](literal)`](../source.md)');
 });
+test('rebasing updates real composition directives across source and target moves',()=>{
+  const root=path.resolve('original');const source=path.join(root,'guides/source.md');const destination=path.join(root,'docs/source.guide.md');
+  const originalPart=path.join(root,'guides/Part.design.md');const movedPart=path.join(root,'docs/design/shared-part.design.md');
+  const contents='# Source\n\n<!-- @include(./Part.design.md) -->\n\n<!-- @embed(./Part.design.md#section) -->\n\n```md\n<!-- @include(./Part.design.md) -->\n```\n\nText <!-- @embed(./Part.design.md#section) -->\n\n<!-- Example: @include(./Part.design.md) -->\n\n<!-- mdcomposer:include:start source="guides/Part.design.md" sha256="example" -->\nGenerated text.\n<!-- mdcomposer:include:end -->\n';
+  const expected=contents.replace('<!-- @include(./Part.design.md) -->','<!-- @include(./design/shared-part.design.md) -->').replace('<!-- @embed(./Part.design.md#section) -->','<!-- @embed(./design/shared-part.design.md#section) -->');
+  assert.equal(api.rebaseMarkdownLinks(contents,source,destination,root,{[originalPart]:movedPart}),expected);
+});
 test('YAML metadata supports real nested YAML and detects duplicates and overlap', () => {
   const result=api.parseMetadata('---\ntitle: Example\nindex:\n  include: false\ntags: [one, two]\n---\n# Example\n');
   assert.deepEqual(result.issues,[]); assert.equal(result.data.index.include,false);
