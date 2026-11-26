@@ -1,6 +1,6 @@
 # mdcomposer
 
-Portable Markdown composition and validation, extracted from MenuLogiq and maintained by WorkLogiq. Use it independently or through Constitutional Dev.
+Portable Markdown composition and validation, extracted from MenuLogiq and maintained by WorkLogiq. Use it independently or through Stavel.
 
 ## What is this?
 
@@ -39,7 +39,7 @@ if (!plan.diagnostics.some(item => item.severity === 'error')) applyChanges(plan
 
 CommonJS `require('@worklogiq/mdcomposer')` exposes the same API. Both builds bundle parser dependencies. Type declarations describe the configuration, diagnostics, and serializable plan. `parseMetadata`, `validateMetadata`, `extractMarkdownLinks`, `rebaseMarkdownLinks`, `headings`, `headingSlugs`, `splitLink`, `decodePath`, and `externalLink` are also exported.
 
-`applyChanges` preflights every destination and source hash before writing. A validation failure leaves all files unchanged. An operating-system failure during writes may leave a partially applied plan; this library does not promise transactional rollback. Constitutional Dev adds its own migration journal where needed.
+`applyChanges` preflights every destination and source hash before writing. A validation failure leaves all files unchanged. An operating-system failure during writes may leave a partially applied plan; this library does not promise transactional rollback. Stavel adds its own migration journal where needed.
 
 ## Standalone skill
 
